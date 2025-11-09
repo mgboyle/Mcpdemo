@@ -108,4 +108,9 @@ def root() -> tuple[Dict[str, Any], int]:
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # Note: Debug mode is enabled for development/demonstration purposes only.
+    # For production deployments, use a production WSGI server like gunicorn or waitress
+    # and disable debug mode by setting debug=False or removing the parameter.
+    import os
+    debug_mode = os.getenv('FLASK_DEBUG', 'true').lower() == 'true'
+    app.run(host='0.0.0.0', port=5000, debug=debug_mode)

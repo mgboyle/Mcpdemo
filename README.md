@@ -58,6 +58,12 @@ You should see output similar to:
  * Running on http://0.0.0.0:5000
 ```
 
+**Security Note:** Debug mode is enabled by default for development and demonstration purposes. For production use, disable debug mode by setting the environment variable:
+```bash
+FLASK_DEBUG=false python app.py
+```
+Or use a production WSGI server like gunicorn or waitress instead.
+
 ## API Endpoints
 
 ### GET /

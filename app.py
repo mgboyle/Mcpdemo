@@ -6,9 +6,37 @@ This server provides mock geographic data endpoints for demonstration purposes.
 """
 
 from flask import Flask, jsonify
+from flasgger import Swagger, swag_from
 from typing import Dict, Any
 
 app = Flask(__name__)
+
+# Configure Swagger UI
+swagger_config = {
+    "headers": [],
+    "specs": [
+        {
+            "endpoint": 'apispec',
+            "route": '/apispec.json',
+            "rule_filter": lambda rule: True,
+            "model_filter": lambda tag: True,
+        }
+    ],
+    "static_url_path": "/flasgger_static",
+    "swagger_ui": True,
+    "specs_route": "/apidocs/"
+}
+
+swagger_template = {
+    "info": {
+        "title": "MCP Demo Map Server API",
+        "description": "A simple map server demonstrating MCP concepts with mock geographic data",
+        "version": "1.0.0"
+    },
+    "schemes": ["http"],
+}
+
+swagger = Swagger(app, config=swagger_config, template=swagger_template)
 
 
 def get_mock_map_data() -> Dict[str, Any]:
@@ -65,9 +93,21 @@ def get_mock_map_data() -> Dict[str, Any]:
 def ping() -> tuple[Dict[str, str], int]:
     """
     Health check endpoint.
-    
-    Returns:
-        tuple: A JSON response with status and message, and HTTP status code 200.
+    ---
+    tags:
+      - Health
+    responses:
+      200:
+        description: Server is running
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: ok
+            message:
+              type: string
+              example: MCP Demo Map Server is running
     """
     return jsonify({
         "status": "ok",
@@ -79,9 +119,49 @@ def ping() -> tuple[Dict[str, str], int]:
 def map_data() -> tuple[Dict[str, Any], int]:
     """
     Map data endpoint returning mock geographic features.
-    
-    Returns:
-        tuple: A JSON response with GeoJSON-formatted mock data, and HTTP status code 200.
+    ---
+    tags:
+      - Map Data
+    responses:
+      200:
+        description: GeoJSON formatted mock map data
+        schema:
+          type: object
+          properties:
+            type:
+              type: string
+              example: FeatureCollection
+            features:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    example: Feature
+                  geometry:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: Point
+                      coordinates:
+                        type: array
+                        items:
+                          type: number
+                        example: [-122.4194, 37.7749]
+                  properties:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        example: San Francisco
+                      population:
+                        type: integer
+                        example: 873965
+                      country:
+                        type: string
+                        example: USA
     """
     data = get_mock_map_data()
     return jsonify(data), 200
@@ -91,9 +171,39 @@ def map_data() -> tuple[Dict[str, Any], int]:
 def root() -> tuple[Dict[str, Any], int]:
     """
     Root endpoint providing API information.
-    
-    Returns:
-        tuple: A JSON response with API details and available endpoints, and HTTP status code 200.
+    ---
+    tags:
+      - API Info
+    responses:
+      200:
+        description: API information and available endpoints
+        schema:
+          type: object
+          properties:
+            name:
+              type: string
+              example: MCP Demo Map Server
+            version:
+              type: string
+              example: 1.0.0
+            description:
+              type: string
+              example: A simple map server demonstrating MCP concepts with mock geographic data
+            endpoints:
+              type: object
+              properties:
+                /:
+                  type: string
+                  example: API information
+                /ping:
+                  type: string
+                  example: Health check endpoint
+                /map:
+                  type: string
+                  example: Get mock map data (GeoJSON format)
+                /apidocs/:
+                  type: string
+                  example: Interactive API documentation (Swagger UI)
     """
     return jsonify({
         "name": "MCP Demo Map Server",
@@ -102,7 +212,8 @@ def root() -> tuple[Dict[str, Any], int]:
         "endpoints": {
             "/": "API information",
             "/ping": "Health check endpoint",
-            "/map": "Get mock map data (GeoJSON format)"
+            "/map": "Get mock map data (GeoJSON format)",
+            "/apidocs/": "Interactive API documentation (Swagger UI)"
         }
     }), 200
 
@@ -113,4 +224,5 @@ if __name__ == '__main__':
     # and disable debug mode by setting debug=False or removing the parameter.
     import os
     debug_mode = os.getenv('FLASK_DEBUG', 'true').lower() == 'true'
-    app.run(host='0.0.0.0', port=5000, debug=debug_mode)
+    port = int(os.getenv('PORT', 5001))  # Changed default to 5001 to avoid macOS AirPlay conflict
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
